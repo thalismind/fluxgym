@@ -275,10 +275,11 @@ def run_captioning(images, concept_sentence, *captions):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"device={device}")
     torch_dtype = torch.float16
+    florence_model = "MiaoshouAI/Florence-2-large-PromptGen-v2.0"
     model = AutoModelForCausalLM.from_pretrained(
-        "multimodalart/Florence-2-large-no-flash-attn", torch_dtype=torch_dtype, trust_remote_code=True
+        florence_model, torch_dtype=torch_dtype, trust_remote_code=True
     ).to(device)
-    processor = AutoProcessor.from_pretrained("multimodalart/Florence-2-large-no-flash-attn", trust_remote_code=True)
+    processor = AutoProcessor.from_pretrained(florence_model, trust_remote_code=True)
 
     captions = list(captions)
     for i, image_path in enumerate(images):
@@ -286,7 +287,7 @@ def run_captioning(images, concept_sentence, *captions):
         if isinstance(image_path, str):  # If image is a file path
             image = Image.open(image_path).convert("RGB")
 
-        prompt = "<DETAILED_CAPTION>"
+        prompt = "<MORE_DETAILED_CAPTION>"
         inputs = processor(text=prompt, images=image, return_tensors="pt").to(device, torch_dtype)
         print(f"inputs {inputs}")
 
@@ -301,7 +302,7 @@ def run_captioning(images, concept_sentence, *captions):
             generated_text, task=prompt, image_size=(image.width, image.height)
         )
         print(f"parsed_answer = {parsed_answer}")
-        caption_text = parsed_answer["<DETAILED_CAPTION>"].replace("The image shows ", "")
+        caption_text = parsed_answer["<MORE_DETAILED_CAPTION>"].replace("The image shows ", "")
         print(f"caption_text = {caption_text}, concept_sentence={concept_sentence}")
         if concept_sentence:
             caption_text = f"{concept_sentence} {caption_text}"
